@@ -4,7 +4,7 @@ import {
   galleryItems, type GalleryItem, type InsertGalleryItem,
   sliderItems, type SliderItem, type InsertSliderItem
 } from "@shared/schema";
-import { db } from "./db";
+import { getDb } from "./db";
 import { eq } from "drizzle-orm";
 import bcrypt from 'bcryptjs';
 
@@ -42,21 +42,25 @@ export interface IStorage {
 // Database storage implementation
 export class DbStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
+    const db = getDb();
     const result = await db.select().from(users).where(eq(users.id, id));
     return result[0];
   }
   
   async getUserByUsername(username: string): Promise<User | undefined> {
+    const db = getDb();
     const result = await db.select().from(users).where(eq(users.username, username));
     return result[0];
   }
   
   async getUserByEmail(email: string): Promise<User | undefined> {
+    const db = getDb();
     const result = await db.select().from(users).where(eq(users.email, email));
     return result[0];
   }
   
   async createUser(user: InsertUser): Promise<User> {
+    const db = getDb();
     // Hash the password before storing
     const hashedPassword = await bcrypt.hash(user.password, 10);
     
@@ -85,77 +89,92 @@ export class DbStorage implements IStorage {
   }
   
   async getAllUsers(): Promise<User[]> {
+    const db = getDb();
     const result = await db.select().from(users);
     return result;
   }
   
   async deleteUser(id: number): Promise<boolean> {
+    const db = getDb();
     const result = await db.delete(users).where(eq(users.id, id)).returning();
     return result.length > 0;
   }
   
   async deleteNews(id: number): Promise<boolean> {
+    const db = getDb();
     const result = await db.delete(news).where(eq(news.id, id)).returning();
     return result.length > 0;
   }
   
   // Implement the rest of the methods for database storage
   async getAllNews(): Promise<News[]> {
+    const db = getDb();
     const result = await db.select().from(news).orderBy(news.date);
     return result;
   }
   
   async getNewsByCategory(category: string): Promise<News[]> {
+    const db = getDb();
     const result = await db.select().from(news).where(eq(news.category, category)).orderBy(news.date);
     return result;
   }
   
   async getFeaturedNews(limit: number): Promise<News[]> {
+    const db = getDb();
     const result = await db.select().from(news).orderBy(news.date).limit(limit);
     return result;
   }
   
   async getNewsById(id: number): Promise<News | undefined> {
+    const db = getDb();
     const result = await db.select().from(news).where(eq(news.id, id));
     return result[0];
   }
   
   async createNews(newsItem: InsertNews): Promise<News> {
+    const db = getDb();
     const result = await db.insert(news).values(newsItem).returning();
     return result[0];
   }
   
   async getAllGalleryItems(): Promise<GalleryItem[]> {
+    const db = getDb();
     const result = await db.select().from(galleryItems);
     return result;
   }
   
   async getGalleryItemsByCategory(category: string): Promise<GalleryItem[]> {
+    const db = getDb();
     const result = await db.select().from(galleryItems).where(eq(galleryItems.category, category));
     return result;
   }
   
   async getGalleryItemById(id: number): Promise<GalleryItem | undefined> {
+    const db = getDb();
     const result = await db.select().from(galleryItems).where(eq(galleryItems.id, id));
     return result[0];
   }
   
   async createGalleryItem(item: InsertGalleryItem): Promise<GalleryItem> {
+    const db = getDb();
     const result = await db.insert(galleryItems).values(item).returning();
     return result[0];
   }
   
   async getAllSliderItems(): Promise<SliderItem[]> {
+    const db = getDb();
     const result = await db.select().from(sliderItems);
     return result;
   }
   
   async getSliderItemById(id: number): Promise<SliderItem | undefined> {
+    const db = getDb();
     const result = await db.select().from(sliderItems).where(eq(sliderItems.id, id));
     return result[0];
   }
   
   async createSliderItem(item: InsertSliderItem): Promise<SliderItem> {
+    const db = getDb();
     const result = await db.insert(sliderItems).values(item).returning();
     return result[0];
   }

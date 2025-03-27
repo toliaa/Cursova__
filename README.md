@@ -4,98 +4,72 @@ A comprehensive administrative information portal for higher education instituti
 
 ## Features
 
-- Responsive design for both mobile and desktop views
+- Responsive design for both mobile and desktop
 - User authentication with JWT tokens
-- Role-based access control (regular users and administrators)
-- News management
-- Image gallery
-- Contact information with map integration
-- Admin dashboard for content management
+- Role-based access control (user/admin)
+- Content management system for news, gallery, and slider items
+- Optimized for performance and accessibility
 
-## Tech Stack
+## Stack
 
-- **Frontend**: React.js, TypeScript, Tailwind CSS, shadcn/ui components
+- **Frontend**: React, React Query, Tailwind CSS, shadcn/ui
 - **Backend**: Node.js, Express
 - **Database**: PostgreSQL with Drizzle ORM
-- **State Management**: React Query for data fetching
-- **Authentication**: JWT tokens with bcrypt password hashing
+- **Authentication**: JWT, passport.js
+- **Type Safety**: TypeScript
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js
-- PostgreSQL database
-
-### Installation
-
 1. Clone the repository
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Set up environment variables:
-   - Create a `.env` file with your PostgreSQL database configuration
+2. Install dependencies with `npm install`
+3. Set up environment variables (see below)
+4. Run the development server with `npm run dev`
 
-4. Run database migrations:
-   ```
-   npm run db:push
-   ```
-5. Start the development server:
-   ```
-   npm run dev
-   ```
+## Environment Variables
 
-## Creating an Admin User
+Create a `.env` file in the root directory with the following variables:
 
-For security reasons, admin user creation is only available through a command-line script:
-
-```bash
-./create-admin.sh
+```
+DATABASE_URL=postgresql://user:password@host:port/dbname
+SESSION_SECRET=your_session_secret
 ```
 
-or
+## Development Workflow
 
-```bash
-npx tsx scripts/create-admin.ts
-```
+- The frontend code is in the `client` directory
+- The backend code is in the `server` directory
+- Shared types and schemas are in the `shared` directory
 
-This will prompt you to enter:
-- Username
-- Email
-- Password (minimum 6 characters)
-- First name (optional)
-- Last name (optional)
+## Deploying to Vercel
 
-## User Roles
+This project is configured to be deployed on Vercel. To deploy:
 
-- **Regular User**: Can view content and access the user dashboard
-- **Admin**: Has additional permissions to manage content (add/delete news, gallery items, manage users)
+1. Connect your GitHub repository to Vercel
+2. Add the required environment variables in the Vercel dashboard:
+   - `DATABASE_URL` - Your PostgreSQL connection string
+   - `SESSION_SECRET` - A secret for encrypting sessions
+   - `NODE_ENV` - Set to `production`
+3. Deploy the project
 
-## API Endpoints
+## PostgreSQL Database Setup
 
-### Authentication
-- `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - User login
-- `GET /api/auth/profile` - Get current user profile (protected)
+The project uses Drizzle ORM for database management. To create or update the database schema:
 
-### Users
-- `GET /api/users` - Get all users (admin only)
-- `DELETE /api/users/:id` - Delete a user (admin only)
+1. Update the schema in `shared/schema.ts`
+2. Run `npm run db:push` to apply the changes to the database
 
-### News
-- `GET /api/news` - Get all news items
-- `GET /api/news/featured` - Get featured news
-- `GET /api/news/:id` - Get news by ID
-- `POST /api/news` - Create news item (protected)
-- `DELETE /api/news/:id` - Delete news item (admin only)
+## Creating Admin Users
 
-### Gallery
-- `GET /api/gallery` - Get all gallery items
-- `GET /api/gallery/:id` - Get gallery item by ID
-- `POST /api/gallery` - Create gallery item (protected)
+To create an admin user:
 
-### Slider
-- `GET /api/slider` - Get all slider items
-- `GET /api/slider/:id` - Get slider item by ID
-- `POST /api/slider` - Create slider item (protected)
+1. Run `npm run create-admin` or `bash create-admin.sh`
+2. Follow the prompts to create an admin account
+
+## Default Users
+
+- Regular user: Username: `testuser`, Email: `test@example.com`, Password: `password`
+- Admin user: Username: `admin`, Email: `admin@example.com`, Password: `adminpassword`
+
+## License
+
+MIT
