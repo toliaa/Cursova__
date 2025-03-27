@@ -13,16 +13,20 @@ import { Button } from "@/components/ui/button";
 import {
   AlertCircle,
   Calendar,
+  ExternalLink,
   FileText, 
   Image, 
   LayoutDashboard,
+  Link2,
   Loader2,
   MoreHorizontal,
+  MousePointerClick,
   Pencil,
   PlusCircle, 
   Settings, 
   SlidersHorizontal, 
   Trash2,
+  Type,
   User, 
   Users,
   X
@@ -89,7 +93,25 @@ const newsFormSchema = z.object({
   category: z.string().min(1, "Please select a category")
 });
 
+const galleryFormSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  imageUrl: z.string().url("Please enter a valid URL"),
+  category: z.string().min(1, "Please select a category")
+});
+
+const sliderFormSchema = z.object({
+  title: z.string().min(5, "Title must be at least 5 characters"),
+  subtitle: z.string().min(5, "Subtitle must be at least 5 characters"),
+  imageUrl: z.string().url("Please enter a valid URL"),
+  ctaText: z.string().min(2, "CTA text must be at least 2 characters"),
+  ctaLink: z.string().min(1, "CTA link is required"),
+  secondaryCtaText: z.string().optional(),
+  secondaryCtaLink: z.string().optional()
+});
+
 type NewsFormValues = z.infer<typeof newsFormSchema>;
+type GalleryFormValues = z.infer<typeof galleryFormSchema>;
+type SliderFormValues = z.infer<typeof sliderFormSchema>;
 
 export default function Admin() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -99,8 +121,11 @@ export default function Admin() {
   
   // State for managing dialogs
   const [showNewsDialog, setShowNewsDialog] = useState(false);
+  const [showGalleryDialog, setShowGalleryDialog] = useState(false);
+  const [showSliderDialog, setShowSliderDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedNewsId, setSelectedNewsId] = useState<number | null>(null);
+  const [deleteType, setDeleteType] = useState<'news' | 'gallery' | 'slider' | 'user'>('news');
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch all news
@@ -137,6 +162,17 @@ export default function Admin() {
     },
     enabled: isAdmin
   });
+  
+  // Fetch all slider items
+  const { data: sliderData, isLoading: isLoadingSlider, refetch: refetchSlider } = useQuery({
+    queryKey: ['/api/slider'],
+    queryFn: async () => {
+      const res = await fetch('/api/slider');
+      if (!res.ok) throw new Error('Failed to fetch slider items');
+      return await res.json();
+    },
+    enabled: isAdmin
+  });
 
   // Form for adding news
   const newsForm = useForm<NewsFormValues>({
@@ -147,6 +183,30 @@ export default function Admin() {
       content: "",
       imageUrl: "",
       category: ""
+    }
+  });
+  
+  // Form for adding gallery items
+  const galleryForm = useForm<GalleryFormValues>({
+    resolver: zodResolver(galleryFormSchema),
+    defaultValues: {
+      title: "",
+      imageUrl: "",
+      category: ""
+    }
+  });
+  
+  // Form for adding slider items
+  const sliderForm = useForm<SliderFormValues>({
+    resolver: zodResolver(sliderFormSchema),
+    defaultValues: {
+      title: "",
+      subtitle: "",
+      imageUrl: "",
+      ctaText: "",
+      ctaLink: "",
+      secondaryCtaText: "",
+      secondaryCtaLink: ""
     }
   });
 
@@ -160,7 +220,7 @@ export default function Admin() {
         date: new Date().toISOString(),
       };
       
-      await apiRequest('POST', '/api/news', newsItem);
+      await apiRequest('/api/news', 'POST', newsItem);
       
       toast({
         title: "Success",
@@ -182,27 +242,51 @@ export default function Admin() {
     }
   };
 
-  // Function to handle deleting news
-  const handleDeleteNews = async () => {
-    if (!selectedNewsId) return;
-    
+  // Function to handle adding gallery item
+  const onAddGallery = async (values: GalleryFormValues) => {
     setIsSubmitting(true);
     try {
-      await apiRequest('DELETE', `/api/news/${selectedNewsId}`);
+      await apiRequest('/api/gallery', 'POST', values);
       
       toast({
         title: "Success",
-        description: "News article has been deleted",
+        description: "Gallery item has been added",
       });
       
-      // Refetch news data and close dialog
-      refetchNews();
-      setShowDeleteDialog(false);
-      setSelectedNewsId(null);
+      // Refetch gallery data and close dialog
+      refetchGallery();
+      setShowGalleryDialog(false);
+      galleryForm.reset();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete news article",
+        description: "Failed to add gallery item",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Function to handle adding slider item
+  const onAddSlider = async (values: SliderFormValues) => {
+    setIsSubmitting(true);
+    try {
+      await apiRequest('/api/slider', 'POST', values);
+      
+      toast({
+        title: "Success",
+        description: "Slider item has been added",
+      });
+      
+      // Refetch slider data and close dialog
+      refetchSlider();
+      setShowSliderDialog(false);
+      sliderForm.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add slider item",
         variant: "destructive",
       });
     } finally {
@@ -210,24 +294,58 @@ export default function Admin() {
     }
   };
 
-  // Function to handle deleting user
-  const handleDeleteUser = async (userId: number) => {
+  // Unified delete function for all item types
+  const handleDeleteItem = async () => {
+    if (!selectedItemId) return;
+    
+    setIsSubmitting(true);
     try {
-      await apiRequest('DELETE', `/api/users/${userId}`);
+      let endpoint = '';
+      let successMessage = '';
+      
+      switch (deleteType) {
+        case 'news':
+          endpoint = `/api/news/${selectedItemId}`;
+          successMessage = "News article has been deleted";
+          break;
+        case 'gallery':
+          endpoint = `/api/gallery/${selectedItemId}`;
+          successMessage = "Gallery item has been deleted";
+          break;
+        case 'slider':
+          endpoint = `/api/slider/${selectedItemId}`;
+          successMessage = "Slider item has been deleted";
+          break;
+        case 'user':
+          endpoint = `/api/users/${selectedItemId}`;
+          successMessage = "User has been deleted";
+          break;
+      }
+      
+      await apiRequest(endpoint, 'DELETE');
       
       toast({
         title: "Success",
-        description: "User has been deleted",
+        description: successMessage,
       });
       
-      // Refetch users data
-      refetchUsers();
+      // Refetch data based on type
+      if (deleteType === 'news') refetchNews();
+      if (deleteType === 'gallery') refetchGallery();
+      if (deleteType === 'slider') refetchSlider();
+      if (deleteType === 'user') refetchUsers();
+      
+      // Close dialog and reset state
+      setShowDeleteDialog(false);
+      setSelectedItemId(null);
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete user",
+        description: `Failed to delete ${deleteType} item`,
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -372,7 +490,8 @@ export default function Admin() {
                                   <DropdownMenuItem 
                                     className="text-red-600"
                                     onClick={() => {
-                                      setSelectedNewsId(item.id);
+                                      setSelectedItemId(item.id);
+                                      setDeleteType('news');
                                       setShowDeleteDialog(true);
                                     }}
                                   >
@@ -525,7 +644,11 @@ export default function Admin() {
               <DialogHeader>
                 <DialogTitle>Confirm Deletion</DialogTitle>
                 <DialogDescription>
-                  Are you sure you want to delete this news article? This action cannot be undone.
+                  {deleteType === 'news' && "Are you sure you want to delete this news article?"}
+                  {deleteType === 'gallery' && "Are you sure you want to delete this gallery image?"}
+                  {deleteType === 'slider' && "Are you sure you want to delete this slider item?"}
+                  {deleteType === 'user' && "Are you sure you want to delete this user account?"}
+                  {" This action cannot be undone."}
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -538,7 +661,7 @@ export default function Admin() {
                 </Button>
                 <Button 
                   variant="destructive" 
-                  onClick={handleDeleteNews}
+                  onClick={handleDeleteItem}
                   disabled={isSubmitting}
                 >
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -558,31 +681,190 @@ export default function Admin() {
                   Manage images and categories in the gallery
                 </CardDescription>
               </div>
-              <Button className="gap-1">
+              <Button className="gap-1" onClick={() => setShowGalleryDialog(true)}>
                 <PlusCircle className="h-4 w-4" />
                 Add Image
               </Button>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
-                <div className="p-4">
-                  <div className="grid gap-4">
-                    <div className="rounded-lg bg-neutral-50 p-6 text-center">
-                      <Image className="mx-auto h-10 w-10 text-neutral-400" />
-                      <h3 className="mt-4 text-lg font-medium">No gallery images</h3>
-                      <p className="mt-2 text-sm text-neutral-500">
-                        You haven't added any gallery images yet.
-                      </p>
-                      <Button className="mt-4 gap-1">
-                        <PlusCircle className="h-4 w-4" /> 
-                        Upload First Image
-                      </Button>
+                {isLoadingGallery ? (
+                  <div className="flex justify-center items-center p-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : !galleryData || galleryData.length === 0 ? (
+                  <div className="p-4">
+                    <div className="grid gap-4">
+                      <div className="rounded-lg bg-neutral-50 p-6 text-center">
+                        <Image className="mx-auto h-10 w-10 text-neutral-400" />
+                        <h3 className="mt-4 text-lg font-medium">No gallery images</h3>
+                        <p className="mt-2 text-sm text-neutral-500">
+                          You haven't added any gallery images yet.
+                        </p>
+                        <Button 
+                          className="mt-4 gap-1" 
+                          onClick={() => setShowGalleryDialog(true)}
+                        >
+                          <PlusCircle className="h-4 w-4" /> 
+                          Upload First Image
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableCaption>A list of all gallery images</TableCaption>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Image</TableHead>
+                          <TableHead className="w-[100px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {galleryData.map((item: any) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{item.title}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{item.category}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <a 
+                                href={item.imageUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline flex items-center gap-1"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                View Image
+                              </a>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="text-red-600"
+                                    onClick={() => {
+                                      setSelectedItemId(item.id);
+                                      setDeleteType('gallery');
+                                      setShowDeleteDialog(true);
+                                    }}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
+          
+          {/* Add Gallery Dialog */}
+          <Dialog open={showGalleryDialog} onOpenChange={setShowGalleryDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add Gallery Image</DialogTitle>
+                <DialogDescription>
+                  Add a new image to the gallery. This will appear on the gallery page.
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...galleryForm}>
+                <form onSubmit={galleryForm.handleSubmit(onAddGallery)} className="space-y-4">
+                  <FormField
+                    control={galleryForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter image title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={galleryForm.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="campus">Campus</SelectItem>
+                            <SelectItem value="events">Events</SelectItem>
+                            <SelectItem value="research">Research</SelectItem>
+                            <SelectItem value="people">People</SelectItem>
+                            <SelectItem value="facilities">Facilities</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={galleryForm.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Image URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter image URL" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Enter a URL for the gallery image
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <DialogFooter>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setShowGalleryDialog(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Add Image
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="slider" className="space-y-6">
@@ -594,31 +876,247 @@ export default function Admin() {
                   Manage homepage slider images and content
                 </CardDescription>
               </div>
-              <Button className="gap-1">
+              <Button className="gap-1" onClick={() => setShowSliderDialog(true)}>
                 <PlusCircle className="h-4 w-4" />
                 Add Slide
               </Button>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
-                <div className="p-4">
-                  <div className="grid gap-4">
-                    <div className="rounded-lg bg-neutral-50 p-6 text-center">
-                      <SlidersHorizontal className="mx-auto h-10 w-10 text-neutral-400" />
-                      <h3 className="mt-4 text-lg font-medium">No slider items</h3>
-                      <p className="mt-2 text-sm text-neutral-500">
-                        You haven't added any slider items yet.
-                      </p>
-                      <Button className="mt-4 gap-1">
-                        <PlusCircle className="h-4 w-4" /> 
-                        Create First Slide
-                      </Button>
+                {isLoadingSlider ? (
+                  <div className="flex justify-center items-center p-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : !sliderData || sliderData.length === 0 ? (
+                  <div className="p-4">
+                    <div className="grid gap-4">
+                      <div className="rounded-lg bg-neutral-50 p-6 text-center">
+                        <SlidersHorizontal className="mx-auto h-10 w-10 text-neutral-400" />
+                        <h3 className="mt-4 text-lg font-medium">No slider items</h3>
+                        <p className="mt-2 text-sm text-neutral-500">
+                          You haven't added any slider items yet.
+                        </p>
+                        <Button 
+                          className="mt-4 gap-1" 
+                          onClick={() => setShowSliderDialog(true)}
+                        >
+                          <PlusCircle className="h-4 w-4" /> 
+                          Create First Slide
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableCaption>A list of all slider items</TableCaption>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Image</TableHead>
+                          <TableHead>CTA</TableHead>
+                          <TableHead className="w-[100px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {sliderData.map((item: any) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">
+                              <div>
+                                <div>{item.title}</div>
+                                <div className="text-sm text-muted-foreground">{item.subtitle}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <a 
+                                href={item.imageUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline flex items-center gap-1"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                View Image
+                              </a>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="flex items-center gap-1">
+                                  <MousePointerClick className="h-3 w-3" />
+                                  {item.ctaText}
+                                </Badge>
+                                <Link2 className="h-3 w-3 text-muted-foreground" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="text-red-600"
+                                    onClick={() => {
+                                      setSelectedItemId(item.id);
+                                      setDeleteType('slider');
+                                      setShowDeleteDialog(true);
+                                    }}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
+          
+          {/* Add Slider Dialog */}
+          <Dialog open={showSliderDialog} onOpenChange={setShowSliderDialog}>
+            <DialogContent className="max-w-md sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Add Slider Item</DialogTitle>
+                <DialogDescription>
+                  Create a new slider item for the homepage. This will appear in the homepage slider.
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...sliderForm}>
+                <form onSubmit={sliderForm.handleSubmit(onAddSlider)} className="space-y-4">
+                  <FormField
+                    control={sliderForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter slide title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={sliderForm.control}
+                    name="subtitle"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subtitle</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter slide subtitle" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={sliderForm.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Image URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter image URL" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Enter a URL for the slider background image
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={sliderForm.control}
+                      name="ctaText"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Call to Action Text</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. Learn More" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={sliderForm.control}
+                      name="ctaLink"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Call to Action Link</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. /about" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={sliderForm.control}
+                      name="secondaryCtaText"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Secondary CTA Text (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. Contact Us" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={sliderForm.control}
+                      name="secondaryCtaLink"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Secondary CTA Link (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. /contact" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setShowSliderDialog(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Add Slider Item
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
@@ -692,7 +1190,11 @@ export default function Admin() {
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem 
                                     className="text-red-600"
-                                    onClick={() => handleDeleteUser(item.id)}
+                                    onClick={() => {
+                                      setSelectedItemId(item.id);
+                                      setDeleteType('user');
+                                      setShowDeleteDialog(true);
+                                    }}
                                     disabled={item.id === user?.id} // Cannot delete own account
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" />
