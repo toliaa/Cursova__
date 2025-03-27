@@ -2,16 +2,35 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FlaskConical, Menu, X } from "lucide-react";
+import { FlaskConical, LogOut, Menu, User, X } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
   
   const isActive = (path: string) => {
     if (path === "/" && location === "/") return true;
     if (path !== "/" && location.startsWith(path)) return true;
     return false;
+  };
+
+  const handleLoginClick = () => {
+    navigate("/login");
+    setIsOpen(false);
+  };
+  
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   return (
@@ -68,7 +87,26 @@ export default function Header() {
               Contacts
             </a>
           </Link>
-          <Button>Login</Button>
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <User className="h-4 w-4" />
+                  {user?.username}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="font-medium">{user?.email}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button onClick={handleLoginClick}>Login</Button>
+          )}
         </nav>
 
         {/* Mobile Navigation */}
@@ -103,7 +141,23 @@ export default function Header() {
               Contacts
             </a>
           </Link>
-          <Button className="w-full">Login</Button>
+          {isAuthenticated ? (
+            <div className="space-y-2">
+              <div className="px-4 py-2 text-sm font-medium text-neutral-600">
+                Signed in as <span className="font-bold">{user?.username}</span>
+              </div>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <Button className="w-full" onClick={handleLoginClick}>Login</Button>
+          )}
         </nav>
       </div>
     </header>
