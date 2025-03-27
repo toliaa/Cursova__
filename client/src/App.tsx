@@ -11,6 +11,8 @@ import News from "@/pages/News";
 import Contacts from "@/pages/Contacts";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import Dashboard from "@/pages/Dashboard";
+import Admin from "@/pages/Admin";
 import MainLayout from "@/layouts/MainLayout";
 
 function Router() {
@@ -23,6 +25,8 @@ function Router() {
       <Route path="/contacts" component={Contacts} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );

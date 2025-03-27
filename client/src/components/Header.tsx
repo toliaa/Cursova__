@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FlaskConical, LogOut, Menu, User, X } from "lucide-react";
+import { FlaskConical, LogOut, Menu, Settings, User, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
@@ -98,6 +98,17 @@ export default function Header() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem className="font-medium">{user?.email}</DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                  <User className="mr-2 h-4 w-4" />
+                  Dashboard
+                </DropdownMenuItem>
+                {user?.role === 'admin' && (
+                  <DropdownMenuItem onClick={() => navigate("/admin")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Admin Portal
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout
@@ -146,6 +157,24 @@ export default function Header() {
               <div className="px-4 py-2 text-sm font-medium text-neutral-600">
                 Signed in as <span className="font-bold">{user?.username}</span>
               </div>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={() => navigate("/dashboard")}
+              >
+                <User className="mr-2 h-4 w-4" />
+                Dashboard
+              </Button>
+              {user?.role === 'admin' && (
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  onClick={() => navigate("/admin")}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Admin Portal
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 className="w-full justify-start" 
