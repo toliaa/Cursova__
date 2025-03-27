@@ -1,16 +1,21 @@
 import { 
-  users, type User, type InsertUser,
+  users, type User, type InsertUser, type LoginUser,
   news, type News, type InsertNews,
   galleryItems, type GalleryItem, type InsertGalleryItem,
   sliderItems, type SliderItem, type InsertSliderItem
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import bcrypt from 'bcryptjs';
 
 // Define the storage interface with CRUD methods
 export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  validateUser(credentials: LoginUser): Promise<User | null>;
   
   // News methods
   getAllNews(): Promise<News[]>;
@@ -29,6 +34,113 @@ export interface IStorage {
   getAllSliderItems(): Promise<SliderItem[]>;
   getSliderItemById(id: number): Promise<SliderItem | undefined>;
   createSliderItem(item: InsertSliderItem): Promise<SliderItem>;
+}
+
+// Database storage implementation
+export class DbStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result[0];
+  }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email));
+    return result[0];
+  }
+  
+  async createUser(user: InsertUser): Promise<User> {
+    // Hash the password before storing
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    
+    const result = await db.insert(users).values({
+      ...user,
+      password: hashedPassword
+    }).returning();
+    
+    return result[0];
+  }
+  
+  async validateUser(credentials: LoginUser): Promise<User | null> {
+    const user = await this.getUserByUsername(credentials.username);
+    
+    if (!user) {
+      return null;
+    }
+    
+    const isValidPassword = await bcrypt.compare(credentials.password, user.password);
+    
+    if (!isValidPassword) {
+      return null;
+    }
+    
+    return user;
+  }
+  
+  // Implement the rest of the methods for database storage
+  async getAllNews(): Promise<News[]> {
+    const result = await db.select().from(news).orderBy(news.date);
+    return result;
+  }
+  
+  async getNewsByCategory(category: string): Promise<News[]> {
+    const result = await db.select().from(news).where(eq(news.category, category)).orderBy(news.date);
+    return result;
+  }
+  
+  async getFeaturedNews(limit: number): Promise<News[]> {
+    const result = await db.select().from(news).orderBy(news.date).limit(limit);
+    return result;
+  }
+  
+  async getNewsById(id: number): Promise<News | undefined> {
+    const result = await db.select().from(news).where(eq(news.id, id));
+    return result[0];
+  }
+  
+  async createNews(newsItem: InsertNews): Promise<News> {
+    const result = await db.insert(news).values(newsItem).returning();
+    return result[0];
+  }
+  
+  async getAllGalleryItems(): Promise<GalleryItem[]> {
+    const result = await db.select().from(galleryItems);
+    return result;
+  }
+  
+  async getGalleryItemsByCategory(category: string): Promise<GalleryItem[]> {
+    const result = await db.select().from(galleryItems).where(eq(galleryItems.category, category));
+    return result;
+  }
+  
+  async getGalleryItemById(id: number): Promise<GalleryItem | undefined> {
+    const result = await db.select().from(galleryItems).where(eq(galleryItems.id, id));
+    return result[0];
+  }
+  
+  async createGalleryItem(item: InsertGalleryItem): Promise<GalleryItem> {
+    const result = await db.insert(galleryItems).values(item).returning();
+    return result[0];
+  }
+  
+  async getAllSliderItems(): Promise<SliderItem[]> {
+    const result = await db.select().from(sliderItems);
+    return result;
+  }
+  
+  async getSliderItemById(id: number): Promise<SliderItem | undefined> {
+    const result = await db.select().from(sliderItems).where(eq(sliderItems.id, id));
+    return result[0];
+  }
+  
+  async createSliderItem(item: InsertSliderItem): Promise<SliderItem> {
+    const result = await db.insert(sliderItems).values(item).returning();
+    return result[0];
+  }
 }
 
 export class MemStorage implements IStorage {
@@ -55,6 +167,27 @@ export class MemStorage implements IStorage {
     
     // Initialize with sample data
     this.initializeData();
+  }
+  
+  // New methods to implement the updated interface
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+  
+  async validateUser(credentials: LoginUser): Promise<User | null> {
+    const user = await this.getUserByUsername(credentials.username);
+    
+    if (!user) {
+      return null;
+    }
+    
+    // For in-memory storage, we compare passwords directly for simplicity
+    // In a real app, passwords should be hashed
+    if (user.password !== credentials.password) {
+      return null;
+    }
+    
+    return user;
   }
 
   private initializeData() {
@@ -205,7 +338,18 @@ export class MemStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
-    const newUser: User = { ...user, id };
+    // Add default values for required properties
+    const newUser: User = { 
+      id,
+      username: user.username,
+      email: user.email,
+      password: user.password,
+      firstName: user.firstName || null,
+      lastName: user.lastName || null,
+      role: "user",
+      isActive: true,
+      createdAt: new Date()
+    };
     this.users.set(id, newUser);
     return newUser;
   }
@@ -270,10 +414,16 @@ export class MemStorage implements IStorage {
   
   async createSliderItem(item: InsertSliderItem): Promise<SliderItem> {
     const id = this.sliderIdCounter++;
-    const newItem: SliderItem = { ...item, id };
+    const newItem: SliderItem = { 
+      ...item, 
+      id,
+      secondaryCtaText: item.secondaryCtaText || null,
+      secondaryCtaLink: item.secondaryCtaLink || null
+    };
     this.slider.set(id, newItem);
     return newItem;
   }
 }
 
-export const storage = new MemStorage();
+// Use the database storage implementation 
+export const storage = new DbStorage();
