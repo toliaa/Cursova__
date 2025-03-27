@@ -151,6 +151,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get user profile" });
     }
   });
+  
+  // Get all users (admin only)
+  app.get("/api/users", verifyToken, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      const allUsers = await storage.getAllUsers();
+      
+      res.json(allUsers);
+    } catch (error) {
+      console.error("Get users error:", error);
+      res.status(500).json({ message: "Failed to retrieve users" });
+    }
+  });
+  
+  // Delete user (admin only)
+  app.delete("/api/users/:id", verifyToken, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      const userId = parseInt(req.params.id);
+      
+      // Prevent deleting own account
+      if (userId === req.user.id) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+      
+      const success = await storage.deleteUser(userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
   // Get all news items
   app.get("/api/news", async (req, res) => {
     try {
@@ -207,6 +250,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid news data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create news" });
+    }
+  });
+  
+  // Delete news item (admin only)
+  app.delete("/api/news/:id", verifyToken, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      const newsId = parseInt(req.params.id);
+      const success = await storage.deleteNews(newsId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "News not found" });
+      }
+      
+      res.json({ message: "News deleted successfully" });
+    } catch (error) {
+      console.error("Delete news error:", error);
+      res.status(500).json({ message: "Failed to delete news" });
     }
   });
   

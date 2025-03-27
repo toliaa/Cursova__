@@ -16,6 +16,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   validateUser(credentials: LoginUser): Promise<User | null>;
+  getAllUsers(): Promise<User[]>;
+  deleteUser(id: number): Promise<boolean>;
   
   // News methods
   getAllNews(): Promise<News[]>;
@@ -23,6 +25,7 @@ export interface IStorage {
   getFeaturedNews(limit: number): Promise<News[]>;
   getNewsById(id: number): Promise<News | undefined>;
   createNews(news: InsertNews): Promise<News>;
+  deleteNews(id: number): Promise<boolean>;
   
   // Gallery methods
   getAllGalleryItems(): Promise<GalleryItem[]>;
@@ -79,6 +82,21 @@ export class DbStorage implements IStorage {
     }
     
     return user;
+  }
+  
+  async getAllUsers(): Promise<User[]> {
+    const result = await db.select().from(users);
+    return result;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id)).returning();
+    return result.length > 0;
+  }
+  
+  async deleteNews(id: number): Promise<boolean> {
+    const result = await db.delete(news).where(eq(news.id, id)).returning();
+    return result.length > 0;
   }
   
   // Implement the rest of the methods for database storage
@@ -172,6 +190,18 @@ export class MemStorage implements IStorage {
   // New methods to implement the updated interface
   async getUserByEmail(email: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(user => user.email === email);
+  }
+  
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    return this.users.delete(id);
+  }
+  
+  async deleteNews(id: number): Promise<boolean> {
+    return this.newsItems.delete(id);
   }
   
   async validateUser(credentials: LoginUser): Promise<User | null> {
