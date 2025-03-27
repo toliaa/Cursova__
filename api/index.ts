@@ -7,7 +7,8 @@ import session from 'express-session';
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { storage } from '../server/storage';
-import { serveStatic } from '../server/vite';
+import path from 'path';
+import { clientRoutingMiddleware } from './_middleware';
 
 const app = express();
 
@@ -61,6 +62,15 @@ passport.deserializeUser(async (id: number, done) => {
 
 // Register API routes
 registerRoutes(app);
+
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  const publicPath = path.join(process.cwd(), 'dist', 'public');
+  app.use(express.static(publicPath));
+  
+  // Use the client routing middleware
+  app.use(clientRoutingMiddleware);
+}
 
 // Error handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

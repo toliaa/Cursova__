@@ -57,35 +57,25 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-8 items-center">
-          <Link href="/">
-            <a className={cn("font-medium hover:text-primary-600 transition", 
+          <Link href="/" className={cn("font-medium hover:text-primary-600 transition", 
               isActive("/") ? "text-primary-600" : "text-neutral-600")}>
               Home
-            </a>
           </Link>
-          <Link href="/about">
-            <a className={cn("font-medium hover:text-primary-600 transition", 
+          <Link href="/about" className={cn("font-medium hover:text-primary-600 transition", 
               isActive("/about") ? "text-primary-600" : "text-neutral-600")}>
               About
-            </a>
           </Link>
-          <Link href="/gallery">
-            <a className={cn("font-medium hover:text-primary-600 transition", 
+          <Link href="/gallery" className={cn("font-medium hover:text-primary-600 transition", 
               isActive("/gallery") ? "text-primary-600" : "text-neutral-600")}>
               Gallery
-            </a>
           </Link>
-          <Link href="/news">
-            <a className={cn("font-medium hover:text-primary-600 transition", 
+          <Link href="/news" className={cn("font-medium hover:text-primary-600 transition", 
               isActive("/news") ? "text-primary-600" : "text-neutral-600")}>
               News
-            </a>
           </Link>
-          <Link href="/contacts">
-            <a className={cn("font-medium hover:text-primary-600 transition", 
+          <Link href="/contacts" className={cn("font-medium hover:text-primary-600 transition", 
               isActive("/contacts") ? "text-primary-600" : "text-neutral-600")}>
               Contacts
-            </a>
           </Link>
           {isAuthenticated ? (
             <DropdownMenu>
@@ -122,35 +112,25 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         <nav className={cn("w-full md:hidden mt-4 space-y-3", isOpen ? "block" : "hidden")}>
-          <Link href="/">
-            <a className={cn("block py-2 px-4 rounded font-medium", 
+          <Link href="/" className={cn("block py-2 px-4 rounded font-medium", 
               isActive("/") ? "text-primary-600 bg-neutral-100" : "text-neutral-600 hover:bg-neutral-100")}>
               Home
-            </a>
           </Link>
-          <Link href="/about">
-            <a className={cn("block py-2 px-4 rounded font-medium", 
+          <Link href="/about" className={cn("block py-2 px-4 rounded font-medium", 
               isActive("/about") ? "text-primary-600 bg-neutral-100" : "text-neutral-600 hover:bg-neutral-100")}>
               About
-            </a>
           </Link>
-          <Link href="/gallery">
-            <a className={cn("block py-2 px-4 rounded font-medium", 
+          <Link href="/gallery" className={cn("block py-2 px-4 rounded font-medium", 
               isActive("/gallery") ? "text-primary-600 bg-neutral-100" : "text-neutral-600 hover:bg-neutral-100")}>
               Gallery
-            </a>
           </Link>
-          <Link href="/news">
-            <a className={cn("block py-2 px-4 rounded font-medium", 
+          <Link href="/news" className={cn("block py-2 px-4 rounded font-medium", 
               isActive("/news") ? "text-primary-600 bg-neutral-100" : "text-neutral-600 hover:bg-neutral-100")}>
               News
-            </a>
           </Link>
-          <Link href="/contacts">
-            <a className={cn("block py-2 px-4 rounded font-medium", 
+          <Link href="/contacts" className={cn("block py-2 px-4 rounded font-medium", 
               isActive("/contacts") ? "text-primary-600 bg-neutral-100" : "text-neutral-600 hover:bg-neutral-100")}>
               Contacts
-            </a>
           </Link>
           {isAuthenticated ? (
             <div className="space-y-2">

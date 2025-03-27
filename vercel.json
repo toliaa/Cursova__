@@ -9,8 +9,8 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist/client",
-        "buildCommand": "cd client && node vercel-build.js"
+        "distDir": "dist/public",
+        "buildCommand": "npm run build"
       }
     }
   ],
