@@ -92,53 +92,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Create an admin account (Only for demo purposes)
-  app.post("/api/auth/create-admin", async (req, res) => {
-    try {
-      const { username, email, password } = req.body;
-      
-      if (!username || !email || !password) {
-        return res.status(400).json({ message: "Missing required fields" });
-      }
-      
-      // Check if username already exists
-      const existingUsername = await storage.getUserByUsername(username);
-      if (existingUsername) {
-        return res.status(400).json({ message: "Username already exists" });
-      }
-      
-      // Check if email already exists
-      const existingEmail = await storage.getUserByEmail(email);
-      if (existingEmail) {
-        return res.status(400).json({ message: "Email already exists" });
-      }
-      
-      // Create admin user directly with admin role
-      const userData = {
-        username,
-        email,
-        password,
-        firstName: req.body.firstName || null,
-        lastName: req.body.lastName || null,
-        role: "admin"
-      };
-      
-      const adminUser = await storage.createUser(userData);
-      
-      res.status(201).json({ 
-        message: "Admin user created successfully",
-        user: {
-          id: adminUser.id,
-          username: adminUser.username,
-          email: adminUser.email,
-          role: adminUser.role
-        }
-      });
-    } catch (error) {
-      console.error("Admin creation error:", error);
-      res.status(500).json({ message: "Failed to create admin user" });
-    }
-  });
   
   // User login
   app.post("/api/auth/login", async (req, res) => {
