@@ -8,6 +8,9 @@ import { log } from '../../server/vite';
 import { loginUserSchema } from '../../shared/schema';
 import { db } from '../../server/db';
 
+// Set environment to production for Netlify Functions
+process.env.NODE_ENV = 'production';
+
 const app = express();
 
 // Middleware

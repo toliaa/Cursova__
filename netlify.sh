@@ -1,14 +1,21 @@
 #!/bin/bash
 
-# Build the frontend
-echo "Building the frontend..."
-npm run build
+# This script helps prepare the Netlify function environment
 
-# Create Netlify directory if it doesn't exist
-mkdir -p netlify/functions
+# Install required dependencies
+echo "Installing dependencies for Netlify Functions..."
+npm install @babel/preset-typescript lightningcss
 
-# Transpile the Netlify function
-echo "Building Netlify function..."
-npx esbuild netlify/functions/api.ts --platform=node --packages=external --bundle --format=esm --outdir=netlify/functions/build
+# Make sure all environment variables are available
+echo "Checking environment variables..."
+if [ -z "$DATABASE_URL" ]; then
+  echo "Warning: DATABASE_URL is not set. Database connections may fail."
+fi
 
-echo "Build completed successfully!"
+if [ -z "$JWT_SECRET" ]; then
+  echo "Warning: JWT_SECRET is not set. Using default value for development only."
+  export JWT_SECRET="your-secret-key-for-dev-only"
+fi
+
+# Done
+echo "Netlify environment setup complete!"

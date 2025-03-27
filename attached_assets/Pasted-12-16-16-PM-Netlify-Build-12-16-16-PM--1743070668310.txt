@@ -1,0 +1,115 @@
+12:16:16 PM: Netlify Build                                                 
+12:16:16 PM: ────────────────────────────────────────────────────────────────
+12:16:16 PM: ​
+12:16:16 PM: ❯ Version
+12:16:16 PM:   @netlify/build 30.0.5
+12:16:16 PM: ​
+12:16:16 PM: ❯ Flags
+12:16:16 PM:   accountId: 634ed953a9342800922479b1
+12:16:16 PM:   baseRelDir: true
+12:16:16 PM:   buildId: 67e5251c4d03ec0008e9a2ee
+12:16:16 PM:   deployId: 67e5251c4d03ec0008e9a2f0
+12:16:16 PM: ​
+12:16:16 PM: ❯ Current directory
+12:16:16 PM:   /opt/build/repo
+12:16:16 PM: ​
+12:16:16 PM: ❯ Config file
+12:16:16 PM:   /opt/build/repo/netlify.toml
+12:16:16 PM: ​
+12:16:16 PM: ❯ Context
+12:16:16 PM:   production
+12:16:16 PM: ​
+12:16:16 PM: build.command from netlify.toml                               
+12:16:16 PM: ────────────────────────────────────────────────────────────────
+12:16:16 PM: ​
+12:16:16 PM: $ npm run build
+12:16:16 PM: > rest-express@1.0.0 build
+12:16:16 PM: > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+12:16:17 PM: vite v5.4.14 building for production...
+12:16:18 PM: transforming...
+12:16:22 PM: ✓ 1757 modules transformed.
+12:16:22 PM: rendering chunks...
+12:16:22 PM: computing gzip size...
+12:16:22 PM: ../dist/public/index.html                   1.87 kB │ gzip:   0.81 kB
+12:16:22 PM: ../dist/public/assets/index-ChrcNePq.css   62.81 kB │ gzip:  10.94 kB
+12:16:22 PM: ../dist/public/assets/index-BN3vAPFH.js   509.66 kB │ gzip: 151.12 kB
+12:16:22 PM: 
+12:16:22 PM: (!) Some chunks are larger than 500 kB after minification. Consider:
+12:16:22 PM: - Using dynamic import() to code-split the application
+12:16:22 PM: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+12:16:22 PM: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+12:16:22 PM: ✓ built in 3.66s
+12:16:22 PM:   dist/index.js  20.4kb
+12:16:22 PM: ⚡ Done in 49ms
+12:16:22 PM: ​
+12:16:22 PM: (build.command completed in 6.3s)
+12:16:22 PM: ​
+12:16:22 PM: Functions bundling                                            
+12:16:22 PM: ────────────────────────────────────────────────────────────────
+12:16:22 PM: ​
+12:16:22 PM: Packaging Functions from netlify/functions directory:
+12:16:22 PM:  - api.ts
+12:16:22 PM: ​
+12:16:22 PM: ▲ [WARNING] "import.meta" is not available with the "cjs" output format and will be empty [empty-import-meta]
+12:16:22 PM:     server/vite.ts:6:33:
+12:16:22 PM:       6 │ const __filename = fileURLToPath(import.meta.url);
+12:16:22 PM:         ╵                                  ~~~~~~~~~~~
+12:16:22 PM:   You need to set the output format to "esm" for "import.meta" to work correctly.
+12:16:22 PM: ▲ [WARNING] "import.meta" is not available with the "cjs" output format and will be empty [empty-import-meta]
+12:16:22 PM:     vite.config.ts:8:33:
+12:16:22 PM:       8 │ const __filename = fileURLToPath(import.meta.url);
+12:16:22 PM:         ╵                                  ~~~~~~~~~~~
+12:16:22 PM:   You need to set the output format to "esm" for "import.meta" to work correctly.
+12:16:22 PM: ✘ [ERROR] Top-level await is currently not supported with the "cjs" output format
+12:16:22 PM:     vite.config.ts:19:10:
+12:16:22 PM:       19 │           await import("@replit/vite-plugin-cartographer").then((m...
+12:16:22 PM:          ╵           ~~~~~
+12:16:23 PM: ▲ [WARNING] "esbuild" should be marked as external for use with "require.resolve" [require-resolve-not-external]
+12:16:23 PM:     node_modules/vite/node_modules/esbuild/lib/main.js:1653:36:
+12:16:23 PM:       1653 │   const libMainJS = require.resolve("esbuild");
+12:16:23 PM:            ╵                                     ~~~~~~~~~
+12:16:23 PM: ✘ [ERROR] Could not resolve "@babel/preset-typescript/package.json"
+12:16:23 PM:     node_modules/@babel/core/lib/config/files/module-types.js:151:40:
+12:16:23 PM:       151 │ ...t packageJson = require("@babel/preset-typescript/package.json");
+12:16:23 PM:           ╵                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+12:16:23 PM:   You can mark the path "@babel/preset-typescript/package.json" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle. You can also surround this "require" call with a try/catch block to handle this failure at run-time instead of bundle-time.
+12:16:23 PM: ✘ [ERROR] Could not resolve "lightningcss"
+12:16:23 PM:     node_modules/vite/dist/node/chunks/dep-CHZK6zbr.js:37952:59:
+12:16:23 PM:       37952 │ ...ightningCSS = createCachedImport(() => import('lightningcss'));
+12:16:23 PM:             ╵                                                  ~~~~~~~~~~~~~~
+12:16:23 PM:   You can mark the path "lightningcss" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle. You can also add ".catch()" here to handle this failure at run-time instead of bundle-time.
+12:16:23 PM: ​
+12:16:23 PM: Dependencies installation error                               
+12:16:23 PM: ────────────────────────────────────────────────────────────────
+12:16:23 PM: ​
+12:16:23 PM:   Error message
+12:16:23 PM:   A Netlify Function failed to require one of its dependencies.
+12:16:23 PM:   Please make sure it is present in the site's top-level "package.json".
+​
+12:16:23 PM:   Build failed with 3 errors:
+12:16:23 PM:   node_modules/@babel/core/lib/config/files/module-types.js:151:40: ERROR: Could not resolve "@babel/preset-typescript/package.json"
+12:16:23 PM:   node_modules/vite/dist/node/chunks/dep-CHZK6zbr.js:37952:59: ERROR: Could not resolve "lightningcss"
+12:16:23 PM:   vite.config.ts:19:10: ERROR: Top-level await is currently not supported with the "cjs" output format
+12:16:23 PM: ​
+12:16:23 PM:   Resolved config
+12:16:23 PM:   build:
+12:16:23 PM:     command: npm run build
+12:16:23 PM:     commandOrigin: config
+12:16:23 PM:     publish: /opt/build/repo/dist/public
+12:16:23 PM:     publishOrigin: config
+12:16:23 PM:   functions:
+12:16:23 PM:     '*':
+12:16:23 PM:       node_bundler: esbuild
+12:16:23 PM:   functionsDirectory: /opt/build/repo/netlify/functions
+12:16:23 PM:   redirects:
+12:16:24 PM: Failed during stage 'building site': Build script returned non-zero exit code: 2 (https://ntl.fyi/exit-code-2)
+12:16:24 PM:     - from: /api/*
+      status: 200
+      to: /.netlify/functions/api/:splat
+    - from: /*
+      status: 200
+      to: /index.html
+  redirectsOrigin: config
+12:16:24 PM: Build failed due to a user error: Build script returned non-zero exit code: 2
+12:16:24 PM: Failing build: Failed to build site
+12:16:24 PM: Finished processing build request in 1m21.63s
